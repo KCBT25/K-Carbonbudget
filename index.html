@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Carbon Budget Drawer</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    svg { font-family: sans-serif; }
+    .line { fill: none; stroke-width: 2px; }
+    .user-path { stroke: steelblue; }
+    .limit-path { stroke: red; stroke-dasharray: 4 2; }
+  </style>
+</head>
+<body>
+  <svg width="800" height="400"></svg>
+  <script>
+    const svg = d3.select("svg"),
+          margin = {top: 40, right: 30, bottom: 30, left: 50},
+          width = +svg.attr("width") - margin.left - margin.right,
+          height = +svg.attr("height") - margin.top - margin.bottom,
+          g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+    const years = d3.range(2025, 2051);
+    const x = d3.scaleLinear().domain([2025, 2050]).range([0, width]);
+    const y = d3.scaleLinear().domain([0, 1000]).range([height, 0]);
+
+    g.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x).tickFormat(d3.format("d")));
+    g.append("g").call(d3.axisLeft(y));
+
+    // Recommended line (example)
+    const limitData = years.map((year, i) => ({ year, value: 1000 - i * 30 }));
+    const line = d3.line().x(d => x(d.year)).y(d => y(d.value));
+
+    g.append("path")
+      .datum(limitData)
+      .attr("class", "line limit-path")
+      .attr("d", line);
+
+    // User editable line (initialized flat)
+    let userData = years.map(year => ({ year, value: 500 }));
+
+    const userPath = g.append("path")
+      .datum(userData)
+      .attr("class", "line user-path")
+      .attr("d", line);
+
+    // Add draggable circles
+    g.selectAll("circle")
+      .data(userData)
+      .enter()
+      .append("circle")
+      .attr("cx", d => x(d.year))
+      .attr("cy", d => y(d.value))
+      .attr("r", 5)
+      .attr("fill", "steelblue")
+      .call(d3.drag()
+        .on("drag", function(event, d) {
+          d.value = y.invert(event.y);
+          d3.select(this).attr("cy", y(d.value));
+          userPath.attr("d", line);
+        })
+      );
+  </script>
+</body>
+</html>
