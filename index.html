@@ -1,65 +1,115 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <title>Carbon Budget Drawer</title>
+  <meta charset="UTF-8">
+  <title>탄소예산 그리기 도구</title>
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <style>
-    svg { font-family: sans-serif; }
+    body { font-family: sans-serif; margin: 20px; }
+    svg { border: 1px solid #ccc; }
     .line { fill: none; stroke-width: 2px; }
-    .user-path { stroke: steelblue; }
-    .limit-path { stroke: red; stroke-dasharray: 4 2; }
+    .fixed-line { stroke: red; }
+    .user-line { stroke: steelblue; }
+    #controls { margin-bottom: 20px; }
+    label { margin-right: 10px; }
   </style>
 </head>
 <body>
-  <svg width="800" height="400"></svg>
+  <div id="controls">
+    <label>탄소예산 (2020~2050, 단위: GtCO₂):
+      <input type="number" id="budgetInput" value="87.4">
+    </label>
+    <label>탄소중립 시점:
+      <select id="netZeroYear">
+        <option value="2050">2050</option>
+        <option value="2045">2045</option>
+        <option value="2040">2040</option>
+      </select>
+    </label>
+    <label>중간 감축 목표:
+      <select id="targetYear">
+        <option value="2035">2035</option>
+        <option value="2040">2040</option>
+        <option value="2045">2045</option>
+      </select>
+    </label>
+    <button onclick="updateUserPath()">감축경로 계산</button>
+    <div id="overBudgetDisplay">탄소예산 초과분: -</div>
+  </div>
+
+  <svg width="1000" height="500"></svg>
+
   <script>
     const svg = d3.select("svg"),
-          margin = {top: 40, right: 30, bottom: 30, left: 50},
+          margin = {top: 40, right: 30, bottom: 30, left: 60},
           width = +svg.attr("width") - margin.left - margin.right,
           height = +svg.attr("height") - margin.top - margin.bottom,
           g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
-    const years = d3.range(2025, 2051);
-    const x = d3.scaleLinear().domain([2025, 2050]).range([0, width]);
-    const y = d3.scaleLinear().domain([0, 1000]).range([height, 0]);
+    const years = d3.range(2018, 2051);
+    const fixedData = {
+      2018: 6.591, 2019: 6.361, 2020: 5.874, 2021: 6.131,
+      2022: 5.974, 2023: 5.995, 2024: 5.912, 2025: 5.841,
+      2026: 5.702, 2027: 5.533, 2028: 5.302, 2029: 5.008, 2030: 4.129
+    };
+
+    const data = years.map(year => ({
+      year,
+      value: fixedData[year] !== undefined ? fixedData[year] : null
+    }));
+
+    const x = d3.scaleLinear().domain([2018, 2050]).range([0, width]);
+    const y = d3.scaleLinear().domain([0, 8]).range([height, 0]);
 
     g.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x).tickFormat(d3.format("d")));
     g.append("g").call(d3.axisLeft(y));
 
-    // Recommended line (example)
-    const limitData = years.map((year, i) => ({ year, value: 1000 - i * 30 }));
     const line = d3.line().x(d => x(d.year)).y(d => y(d.value));
 
+    // Draw fixed path (2018~2030)
     g.append("path")
-      .datum(limitData)
-      .attr("class", "line limit-path")
+      .datum(data.filter(d => d.value !== null))
+      .attr("class", "line fixed-line")
       .attr("d", line);
 
-    // User editable line (initialized flat)
-    let userData = years.map(year => ({ year, value: 500 }));
+    // Prepare user path (2031~2050)
+    let userData = data.map(d => ({ year: d.year, value: d.value !== null ? d.value : 3.0 }));
 
     const userPath = g.append("path")
       .datum(userData)
-      .attr("class", "line user-path")
+      .attr("class", "line user-line")
       .attr("d", line);
 
-    // Add draggable circles
-    g.selectAll("circle")
-      .data(userData)
-      .enter()
-      .append("circle")
-      .attr("cx", d => x(d.year))
-      .attr("cy", d => y(d.value))
-      .attr("r", 5)
-      .attr("fill", "steelblue")
-      .call(d3.drag()
-        .on("drag", function(event, d) {
-          d.value = y.invert(event.y);
-          d3.select(this).attr("cy", y(d.value));
-          userPath.attr("d", line);
-        })
-      );
+    function updateUserPath() {
+      const budget = parseFloat(document.getElementById("budgetInput").value);
+      const netZero = parseInt(document.getElementById("netZeroYear").value);
+      const targetYear = parseInt(document.getElementById("targetYear").value);
+
+      const used = 61.401; // 2020~2030 누적 고정값
+      const remaining = budget - used;
+
+      const remainingYears = netZero - 2030;
+      const perYear = remaining / remainingYears;
+
+      userData = userData.map(d => {
+        if (d.year > 2030) {
+          const proportion = (netZero - d.year) / remainingYears;
+          return {
+            year: d.year,
+            value: Math.max(0, perYear * proportion * 2) // 점진적 감소 모양으로 구성
+          };
+        } else {
+          return d;
+        }
+      });
+
+      userPath.datum(userData).attr("d", line);
+
+      // 누적 총 배출량 계산
+      const total = userData.filter(d => d.year >= 2020).reduce((sum, d) => sum + d.value, 0);
+      const over = total - budget;
+      document.getElementById("overBudgetDisplay").textContent = `탄소예산 초과분: ${over.toFixed(3)} GtCO₂`;
+    }
   </script>
 </body>
 </html>
