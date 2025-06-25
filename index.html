@@ -240,6 +240,8 @@ function updateScenario() {
 
   userPath.datum(scenario).attr("d", line);
 
+
+
   const allYears = years.map(y => {
     if (fixedData[y] !== undefined) return { year: y, value: fixedData[y] };
     const found = scenario.find(d => d.year === y);
@@ -251,6 +253,12 @@ function updateScenario() {
 
   cumCircle.textContent = total.toFixed(1);
   overCircle.textContent = over.toFixed(1);
+  
+  userPath.node().__scenarioMeta__ = {
+  total: total,
+  over: over
+  };
+  
   cumCircle.style.backgroundColor = "#555";
   overCircle.style.backgroundColor = over > 0 ? "crimson" : "blue";
 
@@ -273,23 +281,22 @@ function updateScenario() {
 function saveScenario() {
   const path = userPath.datum().map(d => ({...d}));
   const color = d3.schemeCategory10[savedScenarios.length % 10];
+  
+  const meta = userPath.node().__scenarioMeta__ || { total: 0, over: 0 };
 
   compareGroup.append("path")
     .datum(path)
     .attr("class", "line compare-line")
     .attr("stroke", color)
     .attr("stroke-width", 3)
-    .attr("opacity", 0.6)
     .attr("fill", "none")
     .attr("d", line);
 
-  const total = path.reduce((sum, d) => sum + (d.year >= 2020 ? d.value : 0), 0);
-  const over = total - parseFloat(budgetInput.value);
+ const index = savedScenarios.length + 1;
 
-  const div = document.createElement("div");
-  div.style.color = color;
-  div.textContent = `시나리오 ${savedScenarios.length + 1}: 누적 ${total.toFixed(1)} 억t, 초과 ${over.toFixed(1)} 억t`;
-  scenarioStats.appendChild(div);
+  d3.select("#scenarioStats").append("div")
+    .style("color", color)
+    .html(`시나리오 ${index}: 누적배출량 ${meta.total.toFixed(1)} 억t, 초과배출량 ${meta.over.toFixed(1)} 억t`);
 
   savedScenarios.push(path);
 }
@@ -321,4 +328,3 @@ updateScenario();
 
 </body>
 </html>
-
