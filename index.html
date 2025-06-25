@@ -111,11 +111,11 @@
     <div class="circle-stats">
       <div id="cumCircle" class="circle" style="background-color: #555;">0</div>
       <div id="overCircle" class="circle">0</div>
-      <span>누적 배출량 / 초과 배출량</span>
+      <span>누적배출량 / 초과배출량</span>
     </div>
   </div>
   <div class="chart-container">
-    <svg id="chart" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid meet"></svg>
+    <svg id="chart" viewBox="0 0 900 500" preserveAspectRatio="xMidYMid meet"></svg>
   </div>
   <div id="scenarioStats"></div>
   <h3>연도별 배출량 (억tCO₂) <button onclick="togglePre2030()">2030년 이전 값 보기</button></h3>
@@ -131,7 +131,7 @@
 <script>
 const svg = d3.select("#chart"),
       margin = {top: 20, right: 30, bottom: 30, left: 60},
-      width = 1000 - margin.left - margin.right,
+      width = 900 - margin.left - margin.right,
       height = 500 - margin.top - margin.bottom,
       g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
