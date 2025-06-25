@@ -3,84 +3,89 @@
 <head>
   <meta charset="UTF-8">
   <title>탄소감축 시나리오 시뮬레이터</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://d3js.org/d3.v7.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
       font-family: sans-serif;
-      margin: 10px;
+      margin: 20px;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    .container {
       display: flex;
       flex-direction: column;
       gap: 20px;
     }
-    #main {
-      flex: 1;
-      width: 100%;
+
+    .controls, .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      align-items: flex-start;
     }
-    svg {
-      width: 100%;
-      height: auto;
-      border: 1px solid #ccc;
-      margin-top: 20px;
+
+    label {
+      display: block;
+      margin-bottom: 5px;
     }
-    .line { fill: none; stroke-width: 3px; }
-    .fixed-line { stroke: steelblue; }
-    .user-line { stroke: crimson; }
-    .compare-line { stroke-width: 3px; opacity: 0.6; }
-    .axis-label { font-size: 12px; fill: #333; }
-    label { display: block; margin: 10px 0 5px; }
+
     input[type=range] {
       width: 100%;
       max-width: 300px;
     }
-    .marker { fill: white; stroke: black; stroke-width: 2px; }
+
+    .compare-button {
+      margin-right: 8px;
+      margin-top: 5px;
+    }
+
+    .circle-stats {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    .circle {
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      font-size: 16px;
+      color: white;
+      min-width: 30px;
+      min-height: 30px;
+    }
+
+    #scenarioStats {
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
     table {
       border-collapse: collapse;
       font-size: 14px;
       width: 100%;
     }
+
     th, td {
       border: 1px solid #ccc;
       padding: 4px 8px;
       text-align: right;
     }
-    th { background-color: #f0f0f0; }
-    .highlight { font-weight: bold; background-color: #fff6d6; }
-    .compare-button {
-      margin: 5px 8px 0 0;
-      padding: 6px 10px;
-      font-size: 14px;
+
+    th {
+      background-color: #f0f0f0;
     }
-    .circle-stats {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
-      margin-top: 10px;
-    }
-    .circle {
-      border-radius: 50%;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      font-size: 16px;
+
+    .highlight {
       font-weight: bold;
-      color: white;
-      min-width: 40px;
-      min-height: 40px;
+      background-color: #fff6d6;
     }
-    #statContainer {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-      align-items: center;
-      margin-top: 10px;
-    }
-    #scenarioStats {
-      margin-top: 10px;
-      font-size: 14px;
-    }
+
     .tooltip {
       position: absolute;
       background: #fff;
@@ -90,24 +95,25 @@
       pointer-events: none;
       display: none;
     }
-    @media (min-width: 768px) {
-      body {
-        flex-direction: row;
-        align-items: flex-start;
-        gap: 40px;
-      }
-      #main {
-        max-width: 70%;
-      }
+
+    .chart-container {
+      width: 100%;
+      max-width: 1000px;
+      margin: auto;
+    }
+
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      border: 1px solid #ccc;
     }
   </style>
 </head>
-
-  
 <body>
-<div id="main">
+<div class="container">
   <h2>탄소감축 시나리오 시뮬레이터</h2>
-  <div style="display: flex; gap: 20px; align-items: flex-start;">
+  <div class="controls">
     <div>
       <label>탄소예산 (2020~탄소중립연도, 억tCO₂): <input type="number" id="budgetInput" value="87.4"></label>
       <label>탄소중립 목표연도: <input type="range" id="targetYear" min="2040" max="2050" value="2050"> <span id="targetYearLabel">2050</span></label>
@@ -117,21 +123,20 @@
       <button class="compare-button" onclick="saveScenario()">+ 시나리오 저장</button>
       <button class="compare-button" onclick="resetSettings()">비교 초기화</button>
     </div>
-    <div id="statContainer">
-      <div class="circle-stats">
-        <div id="cumCircle" class="circle" style="background-color: steelblue;">0</div>
-        <div id="overCircle" class="circle" style="background-color: crimson;">0</div>
-        <span>누적 배출량 / 초과 배출량</span>
-      </div>
+    <div class="circle-stats">
+      <div id="cumCircle" class="circle" style="background-color: #555;">0</div>
+      <div id="overCircle" class="circle">0</div>
+      <span>누적 배출량 / 초과 배출량</span>
     </div>
   </div>
-  <svg width="1000" height="500"></svg>
+
+  <div class="chart-container">
+    <svg id="chart" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid meet"></svg>
+  </div>
+
   <div id="scenarioStats"></div>
-</div>
-<div>
-  <h3>연도별 배출량 (억tCO₂)
-    <button onclick="togglePre2030()">2030년 이전 값 보기</button>
-  </h3>
+
+  <h3>연도별 배출량 (억tCO₂) <button onclick="togglePre2030()">2030년 이전 값 보기</button></h3>
   <table id="dataTable">
     <thead><tr><th>연도</th><th>배출량</th></tr></thead>
     <tbody></tbody>
@@ -139,13 +144,21 @@
 </div>
 <div class="tooltip" id="tooltip"></div>
 
-<script>
-  const svg = d3.select("svg"),
-    margin = {top: 20, right: 30, bottom: 30, left: 60},
-    width = +svg.attr("width") - margin.left - margin.right,
-    height = +svg.attr("height") - margin.top - margin.bottom,
-    g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
+<script>
+  const svg = d3.select("#chart"),
+        margin = {top: 20, right: 30, bottom: 30, left: 60},
+        width = 1000 - margin.left - margin.right,
+        height = 500 - margin.top - margin.bottom,
+        g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+  const x = d3.scaleLinear().domain([2018, 2050]).range([0, width]);
+  const y = d3.scaleLinear().domain([0, 7]).range([height, 0]);
+
+  g.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x).tickFormat(d3.format("d")));
+  g.append("g").call(d3.axisLeft(y));
+
+  const line = d3.line().x(d => x(d.year)).y(d => y(d.value));
   const tooltip = d3.select("#tooltip");
 
   const fixedData = {
@@ -154,53 +167,26 @@
     2026: 5.702, 2027: 5.533, 2028: 5.302, 2029: 5.008, 2030: 4.129
   };
 
-  const base = 6.591;
   const years = d3.range(2018, 2051);
-
-  const x = d3.scaleLinear().domain([2018, 2050]).range([0, width]);
-  const y = d3.scaleLinear().domain([0, base]).range([height, 0]);
-
-  g.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x).tickFormat(d3.format("d")));
-  g.append("g").call(d3.axisLeft(y));
-
-  g.append("line")
-    .attr("x1", x(2020)).attr("x2", x(2020))
-    .attr("y1", y(0)).attr("y2", y(base))
-    .attr("stroke", "gray")
-    .attr("stroke-dasharray", "4,4")
-    .attr("opacity", 0.5);
-
-  const line = d3.line().x(d => x(d.year)).y(d => y(d.value));
   const fixedPoints = years.filter(y => fixedData[y] !== undefined).map(year => ({ year, value: fixedData[year] }));
-  g.append("path").datum(fixedPoints).attr("class", "line fixed-line").attr("d", line);
 
-  const userPath = g.append("path").attr("class", "line user-line");
-  const compareGroup = g.append("g");
+  g.append("path").datum(fixedPoints).attr("class", "line fixed-line").attr("d", line).attr("stroke", "steelblue").attr("fill", "none");
 
-  const markerYears = [2030, 2035, 2040, 2045];
-  const markers = g.selectAll(".marker")
-    .data(markerYears.map(y => ({ year: y, value: 0 })))
-    .enter().append("circle")
-    .attr("class", "marker")
-    .attr("r", 5);
+  const userPath = g.append("path").attr("class", "line user-line").attr("stroke", "crimson").attr("fill", "none");
 
-  const sliders = {
-    r35: document.getElementById("r35"),
-    r40: document.getElementById("r40"),
-    r45: document.getElementById("r45")
-  };
-  const spans = {
-    r35: document.getElementById("v35"),
-    r40: document.getElementById("v40"),
-    r45: document.getElementById("v45")
-  };
-  const targetSlider = document.getElementById("targetYear");
-  const targetLabel = document.getElementById("targetYearLabel");
-  const tableBody = document.querySelector("#dataTable tbody");
   const cumCircle = document.getElementById("cumCircle");
   const overCircle = document.getElementById("overCircle");
+  const budgetInput = document.getElementById("budgetInput");
+  const r35 = document.getElementById("r35");
+  const r40 = document.getElementById("r40");
+  const r45 = document.getElementById("r45");
+  const v35 = document.getElementById("v35");
+  const v40 = document.getElementById("v40");
+  const v45 = document.getElementById("v45");
+  const targetYearSlider = document.getElementById("targetYear");
+  const targetYearLabel = document.getElementById("targetYearLabel");
+  const tableBody = document.querySelector("#dataTable tbody");
 
-  let savedScenarios = [];
   let showPre2030 = false;
 
   function togglePre2030() {
@@ -208,24 +194,21 @@
     updateScenario();
   }
 
-  targetSlider.addEventListener("input", () => {
-    targetLabel.textContent = targetSlider.value;
-    updateScenario();
-  });
-  Object.values(sliders).forEach(slider => slider.addEventListener("input", updateScenario));
-  document.getElementById("budgetInput").addEventListener("input", updateScenario);
-
   function updateScenario() {
-    spans.r35.textContent = sliders.r35.value + "%";
-    spans.r40.textContent = sliders.r40.value + "%";
-    spans.r45.textContent = sliders.r45.value + "%";
+    v35.textContent = r35.value + "%";
+    v40.textContent = r40.value + "%";
+    v45.textContent = r45.value + "%";
+    targetYearLabel.textContent = targetYearSlider.value;
 
-    const netZeroYear = parseInt(targetSlider.value);
+    const base = 6.591;
+    const netZeroYear = parseInt(targetYearSlider.value);
+    const budget = parseFloat(budgetInput.value);
+
     const targets = {
       2030: fixedData[2030],
-      2035: base * (1 - sliders.r35.value / 100),
-      2040: base * (1 - sliders.r40.value / 100),
-      2045: base * (1 - sliders.r45.value / 100),
+      2035: base * (1 - r35.value / 100),
+      2040: base * (1 - r40.value / 100),
+      2045: base * (1 - r45.value / 100),
       [netZeroYear]: 0
     };
 
@@ -241,85 +224,45 @@
 
     userPath.datum(scenario).attr("d", line);
 
-    const budget = parseFloat(document.getElementById("budgetInput").value);
     const allYears = years.map(y => {
       if (fixedData[y] !== undefined) return { year: y, value: fixedData[y] };
       const found = scenario.find(d => d.year === y);
       return found ? { year: y, value: found.value } : null;
-    }).filter(Boolean).filter(d => d.year >= 2018 && d.year <= netZeroYear);
+    }).filter(Boolean);
 
     const total = allYears.filter(d => d.year >= 2020).reduce((sum, d) => sum + d.value, 0);
     const over = total - budget;
 
     cumCircle.textContent = total.toFixed(1);
     overCircle.textContent = over.toFixed(1);
+    cumCircle.style.backgroundColor = "#555";
+    overCircle.style.backgroundColor = over > 0 ? "crimson" : "blue";
+
     cumCircle.style.width = cumCircle.style.height = `${Math.max(30, Math.sqrt(total) * 15)}px`;
     overCircle.style.width = overCircle.style.height = `${Math.max(30, Math.sqrt(Math.abs(over)) * 15)}px`;
-
-    markers.data(markerYears.map(y => {
-      const d = allYears.find(e => e.year === y) || { year: y, value: 0 };
-      return d;
-    })).attr("cx", d => x(d.year)).attr("cy", d => y(d.value));
 
     tableBody.innerHTML = allYears
       .filter(d => showPre2030 || d.year >= 2030)
       .map(d => `<tr class="${[2030, 2035, 2040, 2045, 2050].includes(d.year) ? 'highlight' : ''}"><td>${d.year}</td><td>${d.value.toFixed(3)}</td></tr>`)
       .join("");
-
-    const circles = g.selectAll(".hover-circle").data(scenario);
-    circles.enter().append("circle")
-      .attr("class", "hover-circle")
-      .attr("r", 5)
-      .attr("fill", "transparent")
-      .attr("stroke", "transparent")
-      .merge(circles)
-      .attr("cx", d => x(d.year))
-      .attr("cy", d => y(d.value))
-      .on("mouseover", (event, d) => {
-        tooltip.style("display", "block").html(`${d.year}년: ${d.value.toFixed(3)} 억t`);
-      })
-      .on("mousemove", (event) => {
-        tooltip.style("left", (event.pageX + 10) + "px")
-               .style("top", (event.pageY - 20) + "px");
-      })
-      .on("mouseout", () => {
-        tooltip.style("display", "none");
-      });
-
-    userPath.datum().budgetTotal = total;
-    userPath.datum().overAmount = over;
   }
 
+  r35.addEventListener("input", updateScenario);
+  r40.addEventListener("input", updateScenario);
+  r45.addEventListener("input", updateScenario);
+  targetYearSlider.addEventListener("input", updateScenario);
+  budgetInput.addEventListener("input", updateScenario);
+
   function saveScenario() {
-    const path = userPath.datum().map(d => ({...d}));
-    const color = d3.schemeCategory10[savedScenarios.length % 10];
-    compareGroup.append("path")
-      .datum(path)
-      .attr("class", "line compare-line")
-      .attr("stroke", color)
-      .attr("d", line);
-
-    const total = userPath.datum().budgetTotal || 0;
-    const over = userPath.datum().overAmount || 0;
-    const index = savedScenarios.length + 1;
-
-    d3.select("#scenarioStats").append("div")
-      .style("color", color)
-      .html(`시나리오 ${index}: 누적 ${total.toFixed(1)} 억t, 초과 ${over.toFixed(1)} 억t`);
-
-    savedScenarios.push(path);
+    // implement later
   }
 
   function resetSettings() {
-    sliders.r35.value = 50;
-    sliders.r40.value = 70;
-    sliders.r45.value = 85;
-    targetSlider.value = 2050;
-    document.getElementById("budgetInput").value = 87.4;
-    document.getElementById("scenarioStats").innerHTML = "";
-    compareGroup.selectAll("path").remove();
-    savedScenarios = [];
-    showPre2030 = false;
+    r35.value = 50;
+    r40.value = 70;
+    r45.value = 85;
+    targetYearSlider.value = 2050;
+    budgetInput.value = 87.4;
     updateScenario();
   }
 
