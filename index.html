@@ -54,11 +54,11 @@
     }
     #scenarioStats {
       margin-top: 10px;
-      font-size: 14px;
+      font-size: 16px;
     }
     table {
       border-collapse: collapse;
-      font-size: 14px;
+      font-size: 16px;
       width: 100%;
     }
     th, td {
@@ -138,8 +138,17 @@ const svg = d3.select("#chart"),
 const x = d3.scaleLinear().domain([2018, 2050]).range([0, width]);
 const y = d3.scaleLinear().domain([0, 7]).range([height, 0]);
 
-g.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x).tickFormat(d3.format("d")));
-g.append("g").call(d3.axisLeft(y));
+g.append("g")
+  .attr("transform", `translate(0,${height})`)
+  .call(d3.axisBottom(x).tickFormat(d3.format("d")))
+  .selectAll("text")
+  .style("font-size", "20px");
+
+g.append("g")
+  .call(d3.axisLeft(y))
+  .selectAll("text")
+  .style("font-size", "20px");
+
 
 const line = d3.line().x(d => x(d.year)).y(d => y(d.value));
 const tooltip = d3.select("#tooltip");
@@ -306,7 +315,7 @@ budgetInput.addEventListener("input", updateScenario);
 updateScenario();
 </script>
 
-<footer style="text-align: center; margin-top: 40px; font-size: 14px; color: #666;">
+<footer style="text-align: center; margin-top: 40px; font-size: 16px; color: #666;">
   made by Seokjin
 </footer>
 
