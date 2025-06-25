@@ -101,10 +101,10 @@
   <div class="controls">
     <div>
       <label>탄소예산: <input type="number" id="budgetInput" value="87.4"></label>
-      <label>탄소중립 목표연도: <input type="range" id="targetYear" min="2040" max="2050" value="2050"> <span id="targetYearLabel">2050</span></label>
-      <label>2035년 감축률 (%): <input type="range" id="r35" min="0" max="100" value="50"> <span id="v35">50%</span></label>
-      <label>2040년 감축률 (%): <input type="range" id="r40" min="0" max="100" value="70"> <span id="v40">70%</span></label>
-      <label>2045년 감축률 (%): <input type="range" id="r45" min="0" max="100" value="85"> <span id="v45">85%</span></label>
+      <label>탄소중립 목표연도: <span id="targetYearLabel">2050</span> <input type="range" id="targetYear" min="2040" max="2050" value="2050"> </label>
+      <label>2035년 감축률 (%): <span id="v35">50%</span> <input type="range" id="r35" min="0" max="100" value="50"> </label>
+      <label>2040년 감축률 (%): <span id="v40">70%</span> <input type="range" id="r40" min="0" max="100" value="70"> </label>
+      <label>2045년 감축률 (%): <span id="v45">85%</span> <input type="range" id="r45" min="0" max="100" value="85"> </label>
       <button class="compare-button" onclick="saveScenario()">+ 시나리오 저장</button>
       <button class="compare-button" onclick="resetSettings()">비교 초기화</button>
     </div>
