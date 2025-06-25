@@ -12,42 +12,35 @@
       padding: 0;
       box-sizing: border-box;
     }
-
     .container {
       display: flex;
       flex-direction: column;
       gap: 20px;
     }
-
     .controls, .stats {
       display: flex;
       flex-wrap: wrap;
       gap: 20px;
       align-items: flex-start;
     }
-
     label {
       display: block;
       margin-bottom: 5px;
     }
-
     input[type=range] {
       width: 100%;
       max-width: 300px;
     }
-
     .compare-button {
       margin-right: 8px;
       margin-top: 5px;
     }
-
     .circle-stats {
       display: flex;
       gap: 20px;
       align-items: center;
       margin-top: 10px;
     }
-
     .circle {
       border-radius: 50%;
       display: flex;
@@ -59,33 +52,27 @@
       min-width: 30px;
       min-height: 30px;
     }
-
     #scenarioStats {
       margin-top: 10px;
       font-size: 14px;
     }
-
     table {
       border-collapse: collapse;
       font-size: 14px;
       width: 100%;
     }
-
     th, td {
       border: 1px solid #ccc;
       padding: 4px 8px;
       text-align: right;
     }
-
     th {
       background-color: #f0f0f0;
     }
-
     .highlight {
       font-weight: bold;
       background-color: #fff6d6;
     }
-
     .tooltip {
       position: absolute;
       background: #fff;
@@ -95,13 +82,11 @@
       pointer-events: none;
       display: none;
     }
-
     .chart-container {
       width: 100%;
       max-width: 1000px;
       margin: auto;
     }
-
     svg {
       width: 100%;
       height: auto;
@@ -115,7 +100,7 @@
   <h2>탄소감축 시나리오 시뮬레이터</h2>
   <div class="controls">
     <div>
-      <label>탄소예산 (2020~탄소중립연도, 억tCO₂): <input type="number" id="budgetInput" value="87.4"></label>
+      <label>탄소예산: <input type="number" id="budgetInput" value="87.4"></label>
       <label>탄소중립 목표연도: <input type="range" id="targetYear" min="2040" max="2050" value="2050"> <span id="targetYearLabel">2050</span></label>
       <label>2035년 감축률 (%): <input type="range" id="r35" min="0" max="100" value="50"> <span id="v35">50%</span></label>
       <label>2040년 감축률 (%): <input type="range" id="r40" min="0" max="100" value="70"> <span id="v40">70%</span></label>
@@ -129,13 +114,10 @@
       <span>누적 배출량 / 초과 배출량</span>
     </div>
   </div>
-
   <div class="chart-container">
     <svg id="chart" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid meet"></svg>
   </div>
-
   <div id="scenarioStats"></div>
-
   <h3>연도별 배출량 (억tCO₂) <button onclick="togglePre2030()">2030년 이전 값 보기</button></h3>
   <table id="dataTable">
     <thead><tr><th>연도</th><th>배출량</th></tr></thead>
@@ -145,128 +127,189 @@
 <div class="tooltip" id="tooltip"></div>
 
 
+
 <script>
-  const svg = d3.select("#chart"),
-        margin = {top: 20, right: 30, bottom: 30, left: 60},
-        width = 1000 - margin.left - margin.right,
-        height = 500 - margin.top - margin.bottom,
-        g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+const svg = d3.select("#chart"),
+      margin = {top: 20, right: 30, bottom: 30, left: 60},
+      width = 1000 - margin.left - margin.right,
+      height = 500 - margin.top - margin.bottom,
+      g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
-  const x = d3.scaleLinear().domain([2018, 2050]).range([0, width]);
-  const y = d3.scaleLinear().domain([0, 7]).range([height, 0]);
+const x = d3.scaleLinear().domain([2018, 2050]).range([0, width]);
+const y = d3.scaleLinear().domain([0, 7]).range([height, 0]);
 
-  g.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x).tickFormat(d3.format("d")));
-  g.append("g").call(d3.axisLeft(y));
+g.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x).tickFormat(d3.format("d")));
+g.append("g").call(d3.axisLeft(y));
 
-  const line = d3.line().x(d => x(d.year)).y(d => y(d.value));
-  const tooltip = d3.select("#tooltip");
+const line = d3.line().x(d => x(d.year)).y(d => y(d.value));
+const tooltip = d3.select("#tooltip");
 
-  const fixedData = {
-    2018: 6.591, 2019: 6.361, 2020: 5.874, 2021: 6.131,
-    2022: 5.974, 2023: 5.995, 2024: 5.912, 2025: 5.841,
-    2026: 5.702, 2027: 5.533, 2028: 5.302, 2029: 5.008, 2030: 4.129
+const fixedData = {
+  2018: 6.591, 2019: 6.361, 2020: 5.874, 2021: 6.131,
+  2022: 5.974, 2023: 5.995, 2024: 5.912, 2025: 5.841,
+  2026: 5.702, 2027: 5.533, 2028: 5.302, 2029: 5.008, 2030: 4.129
+};
+
+const years = d3.range(2018, 2051);
+const fixedPoints = years.filter(y => fixedData[y] !== undefined).map(year => ({ year, value: fixedData[year] }));
+
+g.append("path")
+  .datum(fixedPoints)
+  .attr("class", "line fixed-line")
+  .attr("d", line)
+  .attr("stroke", "steelblue")
+  .attr("stroke-width", 4)
+  .attr("fill", "none");
+
+const userPath = g.append("path")
+  .attr("class", "line user-line")
+  .attr("stroke", "crimson")
+  .attr("stroke-width", 4)
+  .attr("fill", "none");
+
+const compareGroup = g.append("g");
+
+const markerYears = [2030, 2035, 2040, 2045, 2050];
+const markers = g.selectAll(".marker")
+  .data(markerYears.map(y => ({ year: y, value: 0 })))
+  .enter().append("circle")
+  .attr("class", "marker")
+  .attr("r", 7)
+  .attr("fill", "white")
+  .attr("stroke", "black")
+  .attr("stroke-width", 2);
+
+const cumCircle = document.getElementById("cumCircle");
+const overCircle = document.getElementById("overCircle");
+const budgetInput = document.getElementById("budgetInput");
+const r35 = document.getElementById("r35");
+const r40 = document.getElementById("r40");
+const r45 = document.getElementById("r45");
+const v35 = document.getElementById("v35");
+const v40 = document.getElementById("v40");
+const v45 = document.getElementById("v45");
+const targetYearSlider = document.getElementById("targetYear");
+const targetYearLabel = document.getElementById("targetYearLabel");
+const tableBody = document.querySelector("#dataTable tbody");
+const scenarioStats = document.getElementById("scenarioStats");
+
+let showPre2030 = false;
+let savedScenarios = [];
+
+function togglePre2030() {
+  showPre2030 = !showPre2030;
+  updateScenario();
+}
+
+function updateScenario() {
+  v35.textContent = r35.value + "%";
+  v40.textContent = r40.value + "%";
+  v45.textContent = r45.value + "%";
+  targetYearLabel.textContent = targetYearSlider.value;
+
+  const base = 6.591;
+  const netZeroYear = parseInt(targetYearSlider.value);
+  const budget = parseFloat(budgetInput.value);
+
+  const targets = {
+    2030: fixedData[2030],
+    2035: base * (1 - r35.value / 100),
+    2040: base * (1 - r40.value / 100),
+    2045: base * (1 - r45.value / 100),
+    [netZeroYear]: 0
   };
 
-  const years = d3.range(2018, 2051);
-  const fixedPoints = years.filter(y => fixedData[y] !== undefined).map(year => ({ year, value: fixedData[year] }));
-
-  g.append("path").datum(fixedPoints).attr("class", "line fixed-line").attr("d", line).attr("stroke", "steelblue").attr("fill", "none");
-
-  const userPath = g.append("path").attr("class", "line user-line").attr("stroke", "crimson").attr("fill", "none");
-
-  const cumCircle = document.getElementById("cumCircle");
-  const overCircle = document.getElementById("overCircle");
-  const budgetInput = document.getElementById("budgetInput");
-  const r35 = document.getElementById("r35");
-  const r40 = document.getElementById("r40");
-  const r45 = document.getElementById("r45");
-  const v35 = document.getElementById("v35");
-  const v40 = document.getElementById("v40");
-  const v45 = document.getElementById("v45");
-  const targetYearSlider = document.getElementById("targetYear");
-  const targetYearLabel = document.getElementById("targetYearLabel");
-  const tableBody = document.querySelector("#dataTable tbody");
-
-  let showPre2030 = false;
-
-  function togglePre2030() {
-    showPre2030 = !showPre2030;
-    updateScenario();
+  const scenario = [];
+  for (let y = 2030; y <= netZeroYear; y++) {
+    let value;
+    if (y <= 2035) value = targets[2030] + (targets[2035] - targets[2030]) * ((y - 2030) / 5);
+    else if (y <= 2040) value = targets[2035] + (targets[2040] - targets[2035]) * ((y - 2035) / 5);
+    else if (y <= 2045) value = targets[2040] + (targets[2045] - targets[2040]) * ((y - 2040) / 5);
+    else value = targets[2045] * (1 - ((y - 2045) / (netZeroYear - 2045)));
+    scenario.push({ year: y, value });
   }
 
-  function updateScenario() {
-    v35.textContent = r35.value + "%";
-    v40.textContent = r40.value + "%";
-    v45.textContent = r45.value + "%";
-    targetYearLabel.textContent = targetYearSlider.value;
+  userPath.datum(scenario).attr("d", line);
 
-    const base = 6.591;
-    const netZeroYear = parseInt(targetYearSlider.value);
-    const budget = parseFloat(budgetInput.value);
+  const allYears = years.map(y => {
+    if (fixedData[y] !== undefined) return { year: y, value: fixedData[y] };
+    const found = scenario.find(d => d.year === y);
+    return found ? { year: y, value: found.value } : null;
+  }).filter(Boolean);
 
-    const targets = {
-      2030: fixedData[2030],
-      2035: base * (1 - r35.value / 100),
-      2040: base * (1 - r40.value / 100),
-      2045: base * (1 - r45.value / 100),
-      [netZeroYear]: 0
-    };
+  const total = allYears.filter(d => d.year >= 2020).reduce((sum, d) => sum + d.value, 0);
+  const over = total - budget;
 
-    const scenario = [];
-    for (let y = 2030; y <= netZeroYear; y++) {
-      let value;
-      if (y <= 2035) value = targets[2030] + (targets[2035] - targets[2030]) * ((y - 2030) / 5);
-      else if (y <= 2040) value = targets[2035] + (targets[2040] - targets[2035]) * ((y - 2035) / 5);
-      else if (y <= 2045) value = targets[2040] + (targets[2045] - targets[2040]) * ((y - 2040) / 5);
-      else value = targets[2045] * (1 - ((y - 2045) / (netZeroYear - 2045)));
-      scenario.push({ year: y, value });
-    }
+  cumCircle.textContent = total.toFixed(1);
+  overCircle.textContent = over.toFixed(1);
+  cumCircle.style.backgroundColor = "#555";
+  overCircle.style.backgroundColor = over > 0 ? "crimson" : "blue";
 
-    userPath.datum(scenario).attr("d", line);
+  cumCircle.style.width = cumCircle.style.height = `${Math.max(30, Math.sqrt(total) * 15)}px`;
+  overCircle.style.width = overCircle.style.height = `${Math.max(30, Math.sqrt(Math.abs(over)) * 15)}px`;
 
-    const allYears = years.map(y => {
-      if (fixedData[y] !== undefined) return { year: y, value: fixedData[y] };
-      const found = scenario.find(d => d.year === y);
-      return found ? { year: y, value: found.value } : null;
-    }).filter(Boolean);
+  markers.data(markerYears.map(y => {
+    const d = allYears.find(e => e.year === y) || { year: y, value: 0 };
+    return d;
+  }))
+  .attr("cx", d => x(d.year))
+  .attr("cy", d => y(d.value));
 
-    const total = allYears.filter(d => d.year >= 2020).reduce((sum, d) => sum + d.value, 0);
-    const over = total - budget;
+  tableBody.innerHTML = allYears
+    .filter(d => showPre2030 || d.year >= 2030)
+    .map(d => `<tr class="${[2030, 2035, 2040, 2045, 2050].includes(d.year) ? 'highlight' : ''}"><td>${d.year}</td><td>${d.value.toFixed(3)}</td></tr>`)
+    .join("");
+}
 
-    cumCircle.textContent = total.toFixed(1);
-    overCircle.textContent = over.toFixed(1);
-    cumCircle.style.backgroundColor = "#555";
-    overCircle.style.backgroundColor = over > 0 ? "crimson" : "blue";
+function saveScenario() {
+  const path = userPath.datum().map(d => ({...d}));
+  const color = d3.schemeCategory10[savedScenarios.length % 10];
 
-    cumCircle.style.width = cumCircle.style.height = `${Math.max(30, Math.sqrt(total) * 15)}px`;
-    overCircle.style.width = overCircle.style.height = `${Math.max(30, Math.sqrt(Math.abs(over)) * 15)}px`;
+  compareGroup.append("path")
+    .datum(path)
+    .attr("class", "line compare-line")
+    .attr("stroke", color)
+    .attr("stroke-width", 3)
+    .attr("opacity", 0.6)
+    .attr("fill", "none")
+    .attr("d", line);
 
-    tableBody.innerHTML = allYears
-      .filter(d => showPre2030 || d.year >= 2030)
-      .map(d => `<tr class="${[2030, 2035, 2040, 2045, 2050].includes(d.year) ? 'highlight' : ''}"><td>${d.year}</td><td>${d.value.toFixed(3)}</td></tr>`)
-      .join("");
-  }
+  const total = path.reduce((sum, d) => sum + (d.year >= 2020 ? d.value : 0), 0);
+  const over = total - parseFloat(budgetInput.value);
 
-  r35.addEventListener("input", updateScenario);
-  r40.addEventListener("input", updateScenario);
-  r45.addEventListener("input", updateScenario);
-  targetYearSlider.addEventListener("input", updateScenario);
-  budgetInput.addEventListener("input", updateScenario);
+  const div = document.createElement("div");
+  div.style.color = color;
+  div.textContent = `시나리오 ${savedScenarios.length + 1}: 누적 ${total.toFixed(1)} 억t, 초과 ${over.toFixed(1)} 억t`;
+  scenarioStats.appendChild(div);
 
-  function saveScenario() {
-    // implement later
-  }
+  savedScenarios.push(path);
+}
 
-  function resetSettings() {
-    r35.value = 50;
-    r40.value = 70;
-    r45.value = 85;
-    targetYearSlider.value = 2050;
-    budgetInput.value = 87.4;
-    updateScenario();
-  }
-
+function resetSettings() {
+  r35.value = 50;
+  r40.value = 70;
+  r45.value = 85;
+  targetYearSlider.value = 2050;
+  budgetInput.value = 87.4;
+  scenarioStats.innerHTML = "";
+  compareGroup.selectAll("path").remove();
+  savedScenarios = [];
   updateScenario();
+}
+
+r35.addEventListener("input", updateScenario);
+r40.addEventListener("input", updateScenario);
+r45.addEventListener("input", updateScenario);
+targetYearSlider.addEventListener("input", updateScenario);
+budgetInput.addEventListener("input", updateScenario);
+
+updateScenario();
 </script>
+
+<footer style="text-align: center; margin-top: 40px; font-size: 14px; color: #666;">
+  made by Seokjin
+</footer>
+
 </body>
 </html>
+
