@@ -3,31 +3,107 @@
 <head>
   <meta charset="UTF-8">
   <title>탄소감축 시나리오 시뮬레이터</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <style>
-    body { font-family: sans-serif; margin: 20px; display: flex; gap: 40px; align-items: flex-start; }
-    #main { flex: 1; }
-    svg { border: 1px solid #ccc; margin-top: 20px; }
+    body {
+      font-family: sans-serif;
+      margin: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    #main {
+      flex: 1;
+      width: 100%;
+    }
+    svg {
+      width: 100%;
+      height: auto;
+      border: 1px solid #ccc;
+      margin-top: 20px;
+    }
     .line { fill: none; stroke-width: 3px; }
     .fixed-line { stroke: steelblue; }
     .user-line { stroke: crimson; }
     .compare-line { stroke-width: 3px; opacity: 0.6; }
     .axis-label { font-size: 12px; fill: #333; }
     label { display: block; margin: 10px 0 5px; }
-    input[type=range] { width: 300px; }
+    input[type=range] {
+      width: 100%;
+      max-width: 300px;
+    }
     .marker { fill: white; stroke: black; stroke-width: 2px; }
-    table { border-collapse: collapse; font-size: 14px; }
-    th, td { border: 1px solid #ccc; padding: 4px 8px; text-align: right; }
+    table {
+      border-collapse: collapse;
+      font-size: 14px;
+      width: 100%;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 4px 8px;
+      text-align: right;
+    }
     th { background-color: #f0f0f0; }
     .highlight { font-weight: bold; background-color: #fff6d6; }
-    .compare-button { margin-right: 8px; margin-top: 5px; }
-    .circle-stats { display: flex; gap: 20px; align-items: center; margin-top: 10px; }
-    .circle { border-radius: 50%; display: inline-block; text-align: center; line-height: 1; font-size: 14px; color: white; min-width: 30px; min-height: 30px; }
-    #statContainer { display: flex; gap: 20px; align-items: center; margin-top: 10px; }
-    #scenarioStats { margin-top: 10px; font-size: 14px; }
-    .tooltip { position: absolute; background: #fff; border: 1px solid #ccc; padding: 5px; font-size: 12px; pointer-events: none; display: none; }
+    .compare-button {
+      margin: 5px 8px 0 0;
+      padding: 6px 10px;
+      font-size: 14px;
+    }
+    .circle-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-top: 10px;
+    }
+    .circle {
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 16px;
+      font-weight: bold;
+      color: white;
+      min-width: 40px;
+      min-height: 40px;
+    }
+    #statContainer {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      align-items: center;
+      margin-top: 10px;
+    }
+    #scenarioStats {
+      margin-top: 10px;
+      font-size: 14px;
+    }
+    .tooltip {
+      position: absolute;
+      background: #fff;
+      border: 1px solid #ccc;
+      padding: 5px;
+      font-size: 12px;
+      pointer-events: none;
+      display: none;
+    }
+    @media (min-width: 768px) {
+      body {
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 40px;
+      }
+      #main {
+        max-width: 70%;
+      }
+    }
   </style>
 </head>
+
+  
 <body>
 <div id="main">
   <h2>탄소감축 시나리오 시뮬레이터</h2>
